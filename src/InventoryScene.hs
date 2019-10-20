@@ -20,7 +20,8 @@ inventoryScene :: GL.Color4 Float -> IO Scene
 inventoryScene clearColor = do
   GL.clearColor GL.$= clearColor
   back <- backNode
-  return Scene_ {_sceneChildren = [back], _sceneId = "inventoryScene"}
+  exit <- exitNode
+  return Scene_ {_sceneChildren = [back, exit], _sceneId = "inventoryScene"}
 
 backSprite :: IO Sprite
 backSprite = createSpriteWithPath "assets/sprites/png_pictures/inventory/back.png"
@@ -83,3 +84,36 @@ gridUpdate node gameState =
       | (y + gameState ^. stateYScroll * 2) > 37 = 37
       | (y + gameState ^. stateYScroll * 2) < (-37) = -37
       | otherwise = y + gameState ^. stateYScroll * 2
+
+exitSprite :: IO Sprite
+exitSprite = createSpriteWithPath "assets/sprites/png_pictures/inventory/exit.png"
+
+exitNode :: IO Node
+exitNode = do
+  sprite <- exitSprite
+  return $ createNode $ do
+    nodeSprite .=Just sprite
+    nodeLocalTransform .=
+      createTransform
+        (do transformSize .= sprite ^. spriteSize
+            transformAnchor .= (0.5, 0.5)
+            transformPosition .= GL.Vector3 117 11 0.4
+            )
+    nodeGameStateUpdate .= exitButtonGameStateUpdater
+    nodeUpdate .= buttonsUpdater
+    nodeCollider .= Just (RectangleCollider (sprite ^. spriteSize))
+
+exitButtonGameStateUpdater :: Node -> GameState -> GameState
+exitButtonGameStateUpdater node gameState =
+  let mousex = (gameState ^. stateMouseX)
+      mousey = (gameState ^. stateMouseY)
+   in if (gameState ^. stateMouseClick) && (isInCollision node mousex mousey)
+        then gameState {_activeScene = getSceneById gameState "firstScene"}
+        else gameState
+
+buttonsUpdater :: Node -> GameState -> Node
+buttonsUpdater node gameState =
+  let (x, y) = (gameState ^. stateMouseX, gameState ^. stateMouseY)
+   in if isInCollision node x y
+        then execState (nodeLocalTransform . transformScale .= (1.1, 1.1)) node
+        else execState (nodeLocalTransform . transformScale .= (1, 1)) node

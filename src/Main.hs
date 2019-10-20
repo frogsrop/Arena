@@ -58,7 +58,7 @@ main = do
             , _stateDragging = False
             , _stateDragStartX = 0
             , _stateDragStartY = 0
-            , _activeScene = _inventoryScene
+            , _activeScene = _firstScene
             , _gameInfo =
                 GameInfo
                   { _gameInfoMobsList = mobs

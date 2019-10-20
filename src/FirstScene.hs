@@ -21,7 +21,8 @@ firstScene clearColor = do
   GL.clearColor GL.$= clearColor
   _caveButtonNode <- caveButtonNode
   _exitButtonNode <- exitButtonNode
-  return Scene_ {_sceneChildren = [_caveButtonNode, _exitButtonNode], _sceneId = "firstScene"}
+  backpack <- backpackNode
+  return Scene_ {_sceneChildren = [_caveButtonNode, _exitButtonNode, backpack], _sceneId = "firstScene"}
 
 caveButtonSprite :: IO Sprite
 caveButtonSprite = do
@@ -65,13 +66,6 @@ exitButtonNode = do
     nodeGameStateUpdate .= exitButtonUpdater
     nodeUpdate .= buttonsUpdater
 
-buttonsUpdater :: Node -> GameState -> Node
-buttonsUpdater node gameState =
-  let (x, y) = (gameState ^. stateMouseX, gameState ^. stateMouseY)
-   in if isInCollision node x y
-        then execState (nodeLocalTransform . transformScale .= (1.1, 1.1)) node
-        else execState (nodeLocalTransform . transformScale .= (1, 1)) node
-
 caveButtonGameStateUpdater :: Node -> GameState -> GameState
 caveButtonGameStateUpdater node gameState =
   let mousex = (gameState ^. stateMouseX)
@@ -88,4 +82,35 @@ exitButtonUpdater node gameState =
         then gameState {_stateExit = True}
         else gameState
 
-------------------------------------------------------------------------------------------------------------
+backpackSprite :: IO Sprite
+backpackSprite = createSpriteWithPath "assets/sprites/png_pictures/main_screen/backpack.png"
+
+backpackNode :: IO Node
+backpackNode = do
+  sprite <- backpackSprite
+  return $ createNode $ do
+    nodeSprite .=Just sprite
+    nodeLocalTransform .=
+      createTransform
+        (do transformSize .= sprite ^. spriteSize
+            transformAnchor .= (0.5, 0.5)
+            transformPosition .= GL.Vector3 115 60 1
+            )
+    nodeGameStateUpdate .= backpackButtonGameStateUpdater
+    nodeUpdate .= buttonsUpdater
+    nodeCollider .= Just (RectangleCollider (sprite ^. spriteSize))
+
+backpackButtonGameStateUpdater :: Node -> GameState -> GameState
+backpackButtonGameStateUpdater node gameState =
+  let mousex = (gameState ^. stateMouseX)
+      mousey = (gameState ^. stateMouseY)
+   in if (gameState ^. stateMouseClick) && (isInCollision node mousex mousey)
+        then gameState {_activeScene = getSceneById gameState "inventoryScene"}
+        else gameState
+
+buttonsUpdater :: Node -> GameState -> Node
+buttonsUpdater node gameState =
+  let (x, y) = (gameState ^. stateMouseX, gameState ^. stateMouseY)
+   in if isInCollision node x y
+        then execState (nodeLocalTransform . transformScale .= (1.1, 1.1)) node
+        else execState (nodeLocalTransform . transformScale .= (1, 1)) node

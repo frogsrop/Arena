@@ -14,7 +14,7 @@ demoScene :: GL.Color4 Float -> IO Scene
 demoScene clearColor = do
   GL.clearColor GL.$= clearColor
   _sunNode <- sunNode
-  return Scene_ {_sceneChildren = [_sunNode]}
+  return Scene_ {_sceneChildren = [_sunNode], _sceneId = "demoScene"}
 
 sunSprite = createSpriteWithPath "assets/demo_sprites/sun.png"
 
