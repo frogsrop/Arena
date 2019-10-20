@@ -7,7 +7,7 @@ maintainer:    Ugay Yanis <ugai1yanis1@gmail.com>
 category:      GameDevelopment
 synopsis:      Arena
 description:
-  Game about arena where you can fight with your friends
+  Game about arena where you can fight with monsters
 license:       MIT
 
 build-type:    Simple
@@ -22,7 +22,7 @@ cabal-version: >= 1.10
 executable Arena
   default-language: Haskell2010
 
-  hs-source-dirs: src
+  hs-source-dirs: src, engine
   main-is: Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:
@@ -37,7 +37,6 @@ executable Arena
     Temp
     Texture
     Transform
-
 
   build-depends:
       GLFW-b
@@ -54,6 +53,7 @@ executable Arena
     , lens
     , sort
     , template-haskell
+    , random
   ghc-options: -Wall -O2
   if impl(ghc >= 6.8)
     ghc-options: -fwarn-tabs

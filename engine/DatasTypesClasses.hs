@@ -9,6 +9,7 @@ import           Control.Monad.RWS.Strict
 import           GHC.IO.Unsafe             (unsafePerformIO)
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW          as GLFW
+import           System.Random
 
 type Rotation = Int
 
@@ -29,8 +30,11 @@ data GameState_ a =
     , _stateDragStartY   :: !Double
     , _stateMouseX       :: !Double
     , _stateMouseY       :: !Double
-    , _activeScene       :: IO (Scene_ a)
-    , _gameInfo          :: a
+    , _stateExit         :: !Bool
+    , _activeScene       :: !(Scene_ a)
+    , _scenes            :: ![Scene_ a]
+    , _randomGenerator   :: StdGen
+    , _gameInfo          :: !a
     }
 
 data Env =
@@ -60,9 +64,10 @@ data Event
 class Updatable a where
   update :: a b -> GameState_ b -> (a b, [GameState_ b -> GameState_ b])
 
-newtype Scene_ a =
+data Scene_ a =
   Scene_
     { _sceneChildren :: [Node_ a]
+    , _sceneId       :: String
     }
 
 data Node_ a =
@@ -135,7 +140,10 @@ transformPolarCoordinate =
     (\_transform coordinate@(PolarCoordinate r angle) ->
        _transform
          { _transformPosition' =
-             GL.Vector3 (r * cos angle) (r * sin angle) ((\(GL.Vector3 _ _ z) -> z) (_transform & _transformPosition'))
+             GL.Vector3
+               (r * cos (angle * pi / 180))
+               (r * sin (angle * pi / 180))
+               ((\(GL.Vector3 _ _ z) -> z) (_transform & _transformPosition'))
          , _transformPolarCoordinate' = coordinate
          })
 
@@ -172,7 +180,15 @@ class ToPixelRGBA8 a where
 print_ :: Show a => a -> a
 print_ t =
   unsafePerformIO
-    (do putStrLn "____________________________"
+    (do putStrLn $ "____________________________"
         print t
+        putStrLn "____________________________"
+        return t)
+
+printNode :: Node_ a -> Node_ a
+printNode t =
+  unsafePerformIO
+    (do putStrLn "____________________________"
+        print $ t & _nodeGlobalTransform
         putStrLn "____________________________"
         return t)

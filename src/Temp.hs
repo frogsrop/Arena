@@ -16,7 +16,6 @@ import           Control.Monad.Trans.Writer
 import           Data.List
 import           DatasTypesClasses
 import           GHC.IO                     (liftIO)
-import           GHC.IO.Unsafe              (unsafePerformIO)
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
 import           Node

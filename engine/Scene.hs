@@ -5,19 +5,20 @@ module Scene where
 import           Control.Lens
 import           Control.Monad.RWS.Strict
 import           Data.Function             ((&))
+import           Data.List                 (find)
+import           Data.Maybe                (fromMaybe)
 import           Data.Sort
 import           DatasTypesClasses
 import qualified Graphics.Rendering.OpenGL as GL
 import           Node
 import           Transform
 
-updateScene :: IO (Scene_ a) -> Game_ a ()
-updateScene ioScene = do
+updateScene :: Scene_ a -> Game_ a ()
+updateScene scene = do
   gameState <- get
-  scene <- liftIO ioScene
   let nodes = scene & _sceneChildren
   (updatedChildren, gameStateUpdateFunctions) <- liftIO $ updateHelper nodes gameState
-  put $ set activeScene (return scene {_sceneChildren = updatedChildren}) gameState
+  put $ set activeScene (scene {_sceneChildren = updatedChildren}) gameState
   updGameState <- get
   put $ foldl (&) updGameState gameStateUpdateFunctions
   where
@@ -37,9 +38,8 @@ updateScene ioScene = do
           (xsnodes, xsfunctions) <- updateHelper xs gameState
           return (node : xsnodes, functions ++ xsfunctions)
 
-drawScene :: IO (Scene_ a) -> Game_ a ()
-drawScene ioScene = do
-  scene <- liftIO ioScene
+drawScene :: Scene_ a -> Game_ a ()
+drawScene scene = do
   fromIOList <- liftIO $ concat <$> mapM collectDisplayListsWithPosition (scene & _sceneChildren)
   let displayLists = fromIOList
   let sortedLists = sortBy zOrder displayLists
@@ -48,7 +48,7 @@ drawScene ioScene = do
     drawHelper :: [(GL.DisplayList, Transform)] -> Game_ a ()
     drawHelper [] = return ()
     drawHelper ((texture, _transform):xs) = do
-      let GL.Vector3 _ _ z = view transformPosition _transform
+      let GL.Vector3 _ _ z = _transform ^. transformPosition
       let rotation = _transform & _transformRotation
       let (sx, sy) = _transform & _transformScale
       let (ax, ay) = _transform & _transformAnchor
@@ -70,3 +70,13 @@ drawScene ioScene = do
       | getZOrder transform1 < getZOrder transform2 = GT
       | getZOrder transform1 == getZOrder transform2 = EQ
       | otherwise = LT
+
+getSceneById :: GameState_ a -> String -> Scene_ a
+getSceneById gameState id =
+  let scenes = (gameState & _scenes)
+   in fromMaybe (error "no such id") (find (pred id) scenes)
+  where
+    pred :: String -> Scene_ a -> Bool
+    pred id scene
+      | id == (scene & _sceneId) = True
+      | otherwise = False

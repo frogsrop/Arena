@@ -102,6 +102,7 @@ updateEvents = do
   processEvents
   updatedGameState <- get
   win <- asks envWindow
+  when (gameState ^. stateExit) $ liftIO $ GLFW.setWindowShouldClose win True
   when (updatedGameState ^. stateDragging) $ do
     (x, y) <- liftIO $ GLFW.getCursorPos win
     let sx = updatedGameState ^. stateDragStartX

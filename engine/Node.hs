@@ -21,7 +21,6 @@ collectDisplayListsWithPosition node = do
     collector :: [Node_ a] -> IO [(GL.DisplayList, Transform)]
     collector nodes = concat <$> mapM collectDisplayListsWithPosition nodes
 
-
 setNodeLocalTransform :: Transform -> Node_ a -> Node_ a
 setNodeLocalTransform transform' = execState (nodeLocalTransform .= transform')
 
@@ -30,8 +29,8 @@ setNodeParentTransform transform' = execState (nodeParentTransform .= transform'
 
 instance Updatable Node_ where
   update node gameState =
-    let (updnode, function) =
-          ((node ^. nodeUpdate) (updateNodeGlobalCoordinate node) gameState, (node ^. nodeGameStateUpdate) node)
+    let truePosNode = updateNodeGlobalCoordinate node
+        (updnode, function) = ((node ^. nodeUpdate) truePosNode gameState, (node ^. nodeGameStateUpdate) truePosNode)
      in (updnode, [function])
 
 updateChildren :: GameState_ a -> Node_ a -> IO (Node_ a)
@@ -91,7 +90,7 @@ evaluateRealPolarCoordinates r1 rd ap ad a1 =
         | r2 == 0 = 0
         | otherwise = acos ((r1 * r1 + r2 * r2 - rd * rd) / (2 * r1 * r2))
       (gs, gc) = (gammas, gammac)
-      gamma = gc * signum gs
+      gamma = if r1 == 0 then gc else gc * signum gs
       a2 = (rad_a1 - gamma) * 180 / pi
    in if r2 == 0
         then (0, 0)

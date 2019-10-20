@@ -87,8 +87,8 @@ loadImage :: FilePath -> IO (Image PixelRGBA8)
 loadImage path = do
   image <- readImage path
   case image of
-    Left msg     -> fail msg
-    Right image' -> return $ (fromDynamicImage image')
+    Left msg -> fail msg
+    Right image' -> return (fromDynamicImage image')
 
 createTexture :: FilePath -> IO GL.DisplayList
 createTexture path = do
